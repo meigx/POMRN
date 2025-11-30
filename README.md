@@ -41,6 +41,7 @@ Additional explanations addressing reviewer 1's comments:
     
     For **semi-supervised node classification**, we report **Macro-F1** and **Micro-F1**.  
     - **Macro-F1** equally weights each class and reflects per-class semantic discrimination ability.  
+    
     $$
     \text{Macro-F1} = \frac{1}{C} \sum_{c=1}^{C}
     \frac{2  \text{Precision}_c  \text{Recall}_c} {\text{Precision}_c + \text{Recall}_c},
