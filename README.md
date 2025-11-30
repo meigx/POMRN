@@ -14,7 +14,6 @@ This repository provides:
 # 📌 Additional explanations addressing reviewers' comments
 
 
-
 ### RESPONSE TO REVIEW 1  
 
 Additional explanations addressing reviewer 1's comments:
@@ -144,5 +143,99 @@ Additional explanations addressing reviewer 2's comments:
     $$|\mathcal{S}_{\max}| = O(|\mathcal{R}|^{\,L_{\max}}),$$
     where $L_{\max}$ is a **small constant**, fixed in all experiments. Thus, the growth is **polynomial** rather than exponential in schema size.
     In practice (DBLP/ACM/Aminer/IMDB schemas): $|\mathcal{R}|$ ≤ 4, $L_{\max} = 3$ or $4$, resulting in only **6–10 meta-structures**.
+
+
+    ### RESPONSE TO REVIEW 4  
+    Additional explanations addressing reviewer 4's comments: 
+  - **Response to R4-W1: Motivation & missing recent baselines**
+   
+    We appreciate the reviewer’s comment regarding the motivation and the omission of several recent meta-path–free models (PSHGCN, HINormer, LMSPS, HHGT). Our work focuses on a *different research question*: **identifying which meta-structures are most effective for downstream tasks**.  
+
+    Meta-path–free architectures, including transformer-style HIN models, operate primarily on: token/attribute-level attention, relation-only propagation (e.g., PSHGCN), or sequence modeling of typed tokens (HINormer/LMSPS/HHGT), but **do not explicitly model structure-level semantic refinement**, nor do they analyze which higher-order typed structures are most predictive. Therefore, such methods do not align with our motivation, which is **structure semantics selection**, not relation-only or token-only modeling.
+
+  - **Response to R4-W2: Manual atomic meta-structure selection & semantic logic justification**
+
+    The reviewer raises an important point. Here we clarify thatPOMRN does not rely on manual selection of composite meta-structures.  
+    Our method constructs the entire candidate space automatically from atomic typed edges using **partial-order constraints**.  
+    - The **hierarchy is algorithmically determined**, not handcrafted.  
+    - The **only choice** is the set of **atomic meta-structures**, which are inherent to the schema itself.  
+    - Higher-order structures are then **derived automatically** by partial-order–guided merging.
+  
+    Our experiments merely evaluate **which automatically derived structures are most effective** for downstream performance.
+
+    Regarding semantic logic: Partial-order relations are grounded in **typed-substructure containment**. A meta-structure is “more semantic” precisely because it *extends* another through type-preserving embeddings; this corresponds to deeper semantic refinement (illustrated in Table 4 and Figure 6).  
+
+
+
+
+  - **Response to R4-W3: Dataset splits, deviations from prior reports**
+    
+    We thank the reviewer for pointing this out. Our dataset splits **strictly follow the split protocols provided by the dataset creators and used in the original benchmark papers**, ensuring full reproducibility:
+    - DBLP / ACM / IMDB (ndoe classification): **20% training / 30% validation / 50% testing**, exactly as defined in the HAN and MAGNN datasets.
+    - Amazon / PubMed (typed link prediction): **10% masked edges per relation for testing**, **10% for validation**, **remaining for training**.
+  
+    Differences from prior results in SeHGNN/PSHGCN arise from **unified preprocessing**, which we apply consistently to all baselines to ensure fair comparison.
+
+
+
+
+  - **Response to R4-W4: Public code availability**
+  
+    We agree with the reviewer on the importance of reproducibility.
+
+  - **Response to R4-W5: Minor issues**
+
+    1. **Definition 1 clarity (node types)**  
+   We agree that node types $\mathcal{A}$ should be explicitly stated in the heterogeneous graph formulation.  
+
+    2. **PSD polynomial filter citation**  
+   Section 4.2 will be updated to include prior references for PSD spectral filtering.
+
+    3. **Figure 5(a) mixing ACM/DBLP results**  
+   We appreciate the reviewer catching this. The figure is corrected and separated clearly.
+
+
+    ### RESPONSE TO REVIEW 5  
+
+  - **Response to R5-W1&W3: Scalability and experiments on larger HINs**
+  We appreciate the reviewer’s concern regarding scalability.  
+  Although the main paper reports results on moderate-size benchmarks, the proposed POMRN framework 
+  is designed to scale to large HINs for the following reasons, grounded in the implementation described in Sec. 3. of the paper:
+    1. **Propagation is linear in graph size.**  
+    Each operator $P_S$ is a sparse adjacency-like matrix. PSD convolution uses low-degree monomials (≤3), and with monomial caching the forward pass is $O(|E|d + |V|d)$, matching the complexity of existing spectral models such as PSHGCN.
+  
+    2. **Operator family size is bounded.**  
+   The number of meta-structures is **not tied to graph size**, but to a small 
+   fixed upper bound $L_{\max}$ (2–4 edges). This keeps $|\mathcal{L}_{\mathrm{sel}}|$ extremely small (6–10 structures in practice).
+
+    3. **Construction of operators is efficient.**  
+   Each $P_S$ is computed by a single traversal over typed adjacency matrices, 
+   requiring:$O(|L_{\mathrm{sel}}| \cdot m)$，$|L_{\mathrm{sel}}|\text{ fixed}$, where $m$ is the number of edges.
+
+    To further validate scalability, we are adding results on **ogbn-mag**, a large-scale heterogeneous benchmark.
+  
+  - **Response to R5-W2&W4: Computational cost of partial-order hierarchy construction & comparison with baselines**
+
+    We thank the reviewer for highlighting the absence of explicit computational cost analysis.
+
+       **1. Cost of partial-order hierarchy construction**
+      
+      As described in Sec. 3, POMRN enumerates meta-structures only up to a small maximum size $L_{\max}=3$ or $4$.  Thus the total candidate space is:
+      $$|\mathcal{S}_{\max}| = O(|\mathcal{R}|^{\,L_{\max}}),$$
+    where $|\mathcal{R}| \le 4$ for all datasets in the paper. Therefore: $|\mathcal{S}_{\max}| \le 10$.
+
+    Partial-order determination among all structures requires: $O(|\mathcal{S}_{\max}|^2) \le O(100)$.
+    This cost is **negligible**, and is a one-time preprocessing step.
+
+      **2. Computational cost compared with baselines**
+  
+    Relation-based GNNs build per-relation operators. POMRN builds per-structure operators, but the number of structures is similarly small and fixed.
+  
+    PSHGCN computes adjacency monomials up to fixed degree $K$. POMRN performs the same computational pattern, but over $\{P_S\}$ instead of $\{A_r\}$. Hence, **the cost matches PSHGCN up to a small constant factor**.
+
+    Transformer-based HIN models (HINormer, LMSPS) scale with $O(|V|d^2)$ attention complexity. POMRN avoids attention and retains **linear complexity**.
+
+    Overall, the computational overhead of partial-order construction is tiny, and the runtime/memory cost of POMRN is comparable to PSHGCN and significantly lighter than transformer-based heterogeneous models. 
+
 
 
