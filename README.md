@@ -2,158 +2,147 @@
 
 # 🚀 POMRN: Partial-Order-based Meta-structure Representation Network
 
-Official repository for **“Is Partial Order More Effective in Extracting Meaningful Semantic Relationships in Heterogeneous Graphs?” (WWW 2026 submission)**
+Official repository for **“Is Partial Order More Effective in Extracting Meaningful Semantic Relationships in Heterogeneous Graphs?” (The Web Conference 2026 submission)**
 
 POMRN is a principled heterogeneous graph learning framework grounded in **order theory**, constructing a meta-structure hierarchy under **type-preserving partial-order relations**, and performing **PSD-constrained spectral convolution** to preserve semantic consistency during high-order propagation.
 
 This repository provides:  
 - Full implementation of POMRN  
-- Reproducible experiments (node classification & typed link prediction)  
-- Meta-structure enumeration and partial-order construction code  
-- Additional explanations addressing reviewers' comments for transparency  
-
+- Additional explanations addressing reviewers' comments   
 ---
 
-# 📌 Overview
+# 📌 Additional explanations addressing reviewers' comments
 
-Heterogeneous information networks contain rich semantics encoded by typed nodes and relations. POMRN introduces:
 
-### ✔ Partial-order relations among meta-structures  
-Formalized via **type-preserving embeddings**, enabling hierarchical organization of structures.
 
-### ✔ Structure-induced propagation operators  
-Mapping meta-structures to sparse propagation matrices.
+### RESPONSE TO REVIEW 1  
 
-### ✔ PSD polynomial filtering  
-Ensuring:
-- numerical stability  
-- semantics-preserving propagation  
-- prevention of oscillatory or unstable behavior  
+Additional explanations addressing reviewer 1's comments:
 
-### ✔ Linear scalability  
-Time and memory grow **linearly** with dataset size.
+  - **Response to R1-W3: Definition of “most informative” meta-structures**
+  
+    In Section 4.2, “the most informative meta-structures” refers to the subset $\mathcal{L}_{\mathrm{sel}}$ selected from the partial-order hierarchy $\mathbb{L}(\mathcal{G})$ based on two principled criteria grounded in our framework: 
 
----
+    1. **Atomic coverage:**  
+   We prioritize meta-structures that contain a richer combination of atomic
+   patterns (e.g., PA/PT/PV in DBLP). These structures capture more fine-grained
+   typed relations and thus exhibit stronger representational capacity.
 
-# 🧪 Datasets & Experimental Protocol
+    2. **Partial-order depth and semantic enrichment:**  
+   Within the hierarchy, structures located at higher levels encode strictly
+   richer semantics by type-preserving extensions. Therefore, a structure is
+   considered more informative if it corresponds to a higher semantic level
+   under $\preceq_{\mathcal{G}}$, while still maintaining type-consistent embeddings.
 
-Evaluated on:
+    A central goal of this work is to **identify and select such informative meta-structures for downstream tasks**. This motivates using partial-order relations to characterize semantic evolution and guide principled structure selection. 
 
-- **Node Classification**: DBLP, ACM, Aminer, IMDB  
-- **Typed Link Prediction**: Amazon, PubMed  
-- **Large-scale** benchmark: **ogbn-mag**
+    Empirically, Figure 6 verifies that structures with greater atomic diversity and deeper semantic extension yield consistently higher Macro-/Micro-F1 on DBLP and IMDB, demonstrating that our definition of “informative” aligns with both theoretical semantics and experimental outcomes.
 
-### Split Ratios  
-- Node classification: **20% train / 30% val / 50% test**  
-- Link prediction: **10% test mask per relation**, **10% validation**  
-- All baselines use **identical splits** for fairness.
+  - **Response to R1-W6: Explanation of the chosen evaluation metrics**
+    
+    For **semi-supervised node classification**, we report **Macro-F1** and **Micro-F1**.  
+    - **Macro-F1** equally weights each class and reflects per-class semantic discrimination ability.  
+    $$
+    \text{Macro-F1} = \frac{1}{C} \sum_{c=1}^{C}
+    \frac{2 \cdot \text{Precision}_c \cdot \text{Recall}_c} {\text{Precision}_c + \text{Recall}_c},
+    $$
+    where 
+    $$\text{Precision}_c = \frac{TP_c}{TP_c + FP_c}, \quad \text{Recall}_c    = \frac{TP_c}{TP_c + FN_c}.$$
+    
+    - **Micro-F1** reflects overall performance and is robust to imbalancedm distributions.
+     $$\text{Micro-F1} = \frac{2TP}{2TP + FP + FN},$$
+    where $TP, FP, FN$ are computed globally across all classes.
 
----
+    For **typed link prediction**, we report **ROC-AUC** and **MRR**, following the
+    evaluation protocol of PSHGCN and R-HGNN.  
+    - **ROC-AUC** measures the model’s ability to distinguish positive vs. negative typed edges under type-consistent sampling. The ROC-AUC measures the area under the ROC curve:
+    $$\text{AUC} = \int_{0}^{1} TPR(FPR) \, d(FPR),$$
+    where  $TPR = \frac{TP}{TP + FN}, FPR = \frac{FP}{FP + TN}.$
 
-# 📝 Rebuttal-Based Clarifications  
-Below are transparent responses to reviewers’ specific questions.
 
----
+    - **MRR** captures ranking quality, which is essential for typed relational
+      inference in multi-relational HINs.
+      $$\text{MRR} = \frac{1}{|\mathcal{Q}|} \sum_{(u,v)\in\mathcal{Q}} \frac{1}{\text{rank}(u,v)},$$
+      where $\text{rank}(u,v)$ is the position of the true positive edge among all candidate edges scored under relation $r$.
+  
+    Together, these metrics provide a complete view of classification accuracy, ranking capability, and robustness to class/edge imbalances.
 
-## **1. Readability & Conceptual Clarity (R1, R2)**  
-We appreciate the request for stronger intuition. Our formal definitions—heterogeneous graphs, atomic/meta-structures, type-preserving embeddings, partial-order relations—are in Sec. 3.1–3.2, supported by illustrative figures (Fig. 5–6) and examples such as **A–P → A–P–T/V** derived from Def. 4.  
-**Fig. 1 has been revised** to better explain semantic loss in random-walk methods and will appear in the updated version.
 
----
 
-## **2. Scalability, Storage & Computational Complexity (R1, R2, R3, R5)**
+### RESPONSE TO REVIEW 2  
+Additional explanations addressing reviewer 2's comments:
+  - **Response to R2-W3: Toy example for partial-order embedding**
+  
+    To provide more intuition, we include here a small running example consistent with the definitions in Sec. 3. and the hierarchy illustrated in Fig. 3. of the paper.
 
-### Hierarchy Construction  
-- Bounded by **max meta-structure size** (2–4 typed edges)  
-- ≤10 structures after pruning  
-- One-time cost:  
-  ```
-  O(|S_max|^2)
-  ```
+    Consider a toy HIN with three atomic meta-structures:
+     **PA:** Author → Paper, **PT:** Paper → Term, **PV:** Paper → Venue. These are the atomic structures shown in Fig. 3.
 
-### Propagation  
-- Each \(P_S\): sparse adjacency-like matrix  
-- Construction:  
-  ```
-  O(|L_sel| * m)
-  ```
-- PSD polynomial (K ≤ 3) with monomial caching:  
-  ```
-  O(|E| d + |V| d)
-  ```
-- Memory:  
-  ```
-  O(|E| + |V| d)
-  ```
 
-### Scaling with More Types  
-Enumeration bounded by structure size ⇒ **no exponential growth**.
+    #### **Step 1: Atomic structures**
+    Each atomic pattern corresponds to a minimal meta-structure: $s_{PA} = (A \!-\! P)$, $s_{PT} = (P \!-\! T)$, $s_{PV} = (P \!-\! V)$.
 
----
+    #### **Step 2: Embedding into composite structures**
+    A composite structure $s_{APT} = (A \!-\! P \!-\! T)$ *contains* both atomic
+    patterns $s_{PA}$ and $s_{PT}$.  
+    According to Definition 4 (partial order over meta-structures), we have:
+    $$
+    s_{PA} \preceq_{\mathcal{G}} s_{APT},\qquad
+    s_{PT} \preceq_{\mathcal{G}} s_{APT}.
+    $$
 
-## **3. Motivation & Relation to Recent Baselines (R4)**  
-Transformer-based models (HINormer, LMSPS, HHGT) rely on token/attribute-level attention, not typed-structure containment.  
-POMRN introduces a **distinct semantic axis** via partial-order refinement—orthogonal to transformer architectures.  
-Thus, the comparable baselines are meta-path, meta-graph, and spectral/relational-subgraph models.
+    Likewise, the composite pattern $s_{APV} = (A \!-\! P \!-\! V)$ satisfies:
+    $$
+    s_{PA} \preceq_{\mathcal{G}} s_{APV},\qquad
+    s_{PV} \preceq_{\mathcal{G}} s_{APV}.
+    $$
 
----
+      #### **Step 3: Hierarchical paths as sequences of semantic refinement**
+    A hierarchical route such as: $\text{PA} \;\rightarrow\; \text{APV} \;\rightarrow\; \text{APTV},$ represents *semantic refinement*:
+    1. **PA** — author writes a paper  
+    2. **APV** — adds venue semantics  
+    3. **APTV** — adds topical semantics (term information)
 
-## **4. Partial-Order Enforcement & PSD Semantics (R2, R3)**  
-The PSD form \(g^\top g\):
+    This mirrors the partial-order graph in Fig. 4 and the deeper routes analyzed
+    in Fig. 6 of the paper (e.g., the orange route). Thus, a path in the hierarchy corresponds directly to how semantic meaning is gradually enriched through type-preserving extension.
 
-- prevents sign-flipping  
-- avoids oscillation and instability  
-- mitigates over-smoothing  
-- enforces monotone semantic aggregation  
+  - **Response to R2-W4: Why PSD is desirable and comparison to non-PSD filters**
+    #### **1. Stability and avoidance of oscillation**
+    Unconstrained noncommutative polynomials 
+    $$g(\{P_S\}) = \sum w_{S_1,\dots,S_k} P_{S_1}\cdots P_{S_k}$$
+    may introduce **sign-flipping** or **oscillatory responses** during propagation because the operators \(P_S\) are sparse and non-symmetric.
+    The PSD construction: $g^{\top} g \succeq 0$ removes these oscillations and ensures *stable, monotone accumulation* of semantic information.
 
-Our non-PSD ablation (“w/o PSD”) shows consistent degradation.
+    #### **2. Empirical comparison with non-PSD variant**
+    The “w/o PSD” variant in our ablation study (Sec. 5.4) implements an unconstrained polynomial. Across DBLP and IMDB, removing the PSD constraint yields the largest performance drop among all ablations, confirming: reduced semantic consistency, poorer optimization stability, and degraded high-order composition ability.
 
-Partial-order constraints persist because \(P_S\) encodes fixed typed-substructure relations; coefficient updates cannot violate these inclusions. Empirical evidence supporting semantic consistency appears in Sec. 4.4.
 
----
 
-## **5. Experimental Clarity & Reproducibility (R1, R2, R4, R5)**  
+    ### RESPONSE TO REVIEW 3  
+    Additional explanations addressing reviewer 3's comments: 
+  - **Response to R3-W2: Why PSD is desirable and comparison to non-PSD filters**
+  
+    We agree that qualitative evidence helps illustrate why partial-order–guided meta-structure selection captures “meaningful semantic relationships.” Although the main paper focuses on quantitative performance, several existing figures implicitly provide qualitative insight:
+    1. **Figure 4 (Partial-order hierarchy):**  
+   The hierarchy groups meta-structures according to their typed semantic extensions. Each upward step adds meaningful attributes (venue, topic), directly reflecting progressive semantic enrichment in the academic network schema.
+    2. **Figure 6 (Route analysis):**  
+   The orange route consistently yields the highest accuracy because it traverses structures that combine PT- and PV-related semantics, aligning with how paper topics and venues jointly influence author classification inDBLP. This shows that the semantic logic encoded by the hierarchy corresponds to real-world domain semantics.
 
-### Large-Scale Benchmark  
-POMRN runs efficiently on **ogbn-mag**; results are provided under `results/ogbn-mag/`.
+    3. **Atomic-combination examples in Table 4:**  
+   The PT+PV combination being most effective reflects that topic and venue information are jointly predictive for academic categories—showing that partial-order–based merging is semantically meaningful.
+  
+      Together, these observations provide qualitative support that the partial-order hierarchy organizes meta-structures in a way that aligns with real semantics, not arbitrary graph patterns. Additional qualitative examples will be included in the camera-ready version.
 
-### LLM Baselines  
-LLM-based methods require textual node descriptions; the datasets here do not contain text.  
-Thus LLMs are **orthogonal** rather than directly comparable.  
-POMRN could complement LLM architectures in future work.
+  - **Response to R3-W3: Growth of candidate meta-structures with schema size**
+  
+    In our framework, the number of candidate meta-structures does **not** grow exponentially with the number of node or edge types because enumeration is explicitly bounded by the **maximum allowed meta-structure size**. 
+    Let:
+    - $|\mathcal{A}|$ = number of node types  
+    - $|\mathcal{R}|$ = number of edge types  
+    - $L_{\max}$ = maximum structure length (2–4 edges in our experiments)
+    Then the upper bound of the candidate space is:
+    $$|\mathcal{S}_{\max}| = O(|\mathcal{R}|^{\,L_{\max}}),$$
+    where $L_{\max}$ is a **small constant**, fixed in all experiments. Thus, the growth is **polynomial** rather than exponential in schema size.
+    In practice (DBLP/ACM/Aminer/IMDB schemas): $|\mathcal{R}|$ ≤ 4, $L_{\max} = 3$ or $4$, resulting in only **6–10 meta-structures**.
 
-### Dataset Splitting & Deviations  
-Differences from some prior papers arise from **unified preprocessing** and **identical splits for all baselines**, ensuring fair comparison.  
-All edge masking, split ratios, and feature-handling details are available in `scripts/splits/`.
 
----
-
-# 📦 Repository Structure
-
-```
-POMRN/
-│── models/
-│── operators/
-│── data/
-│── scripts/
-│   ├── build_partial_order.py
-│   ├── preprocess.py
-│   └── run_experiments.sh
-│── results/
-│── README.md
-│── requirements.txt
-```
-
----
-
-# ▶️ Running the Code
-
-```bash
-pip install -r requirements.txt
-python scripts/run_experiments.py --dataset dblp
-```
-
----
-
-# 🙌 Citation  
-(To be added after acceptance.)
