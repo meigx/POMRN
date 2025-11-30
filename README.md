@@ -44,7 +44,7 @@ Additional explanations addressing reviewer 1's comments:
     - **Macro-F1** equally weights each class and reflects per-class semantic discrimination ability.  
     $$
     \text{Macro-F1} = \frac{1}{C} \sum_{c=1}^{C}
-    \frac{2 \cdot \text{Precision}_c \cdot \text{Recall}_c} {\text{Precision}_c + \text{Recall}_c},
+    \frac{2  \text{Precision}_c  \text{Recall}_c} {\text{Precision}_c + \text{Recall}_c},
     $$
     where 
     $$\text{Precision}_c = \frac{TP_c}{TP_c + FP_c}, \quad \text{Recall}_c    = \frac{TP_c}{TP_c + FN_c}.$$
