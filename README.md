@@ -2,12 +2,12 @@
 
 # 🚀 POMRN: Partial-Order-based Meta-structure Representation Network
 
-Official repository for **“Is Partial Order More Effective in Extracting Meaningful Semantic Relationships in Heterogeneous Graphs?” (The Web Conference 2026 submission)**
+Official repository for **“Is Partial Order More Effective in Extracting Meaningful Semantic Relationships in Heterogeneous Graphs?” (The Web Conference 2026 submission)** **(Under active development)**
 
 POMRN is a principled heterogeneous graph learning framework grounded in **order theory**, constructing a meta-structure hierarchy under **type-preserving partial-order relations**, and performing **PSD-constrained spectral convolution** to preserve semantic consistency during high-order propagation.
 
 This repository provides:  
-- Full implementation of POMRN  
+- Full implementation of POMRN (Under active development)
 - Additional explanations addressing reviewers' comments   
 ---
 
